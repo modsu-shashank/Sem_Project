@@ -8,7 +8,6 @@ import Checkout from "./pages/Checkout.jsx";
 import Login from "./pages/Login.jsx";
 import Register from "./pages/Register.jsx";
 import AdminPanel from "./pages/AdminPanel.jsx";
-import UserDashboard from "./pages/UserDashboard.jsx";
 import About from "./pages/About.jsx";
 import Contact from "./pages/Contact.jsx";
 import Feedback from "./pages/Feedback.jsx";
@@ -76,10 +75,6 @@ function App() {
                       <Route path="/login" element={<Login />} />
                       <Route path="/register" element={<Register />} />
                       <Route path="/admin" element={<AdminPanel />} />
-                      <Route
-                        path="/user-dashboard"
-                        element={<UserDashboard />}
-                      />
                       <Route path="/about" element={<About />} />
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/feedback" element={<Feedback />} />

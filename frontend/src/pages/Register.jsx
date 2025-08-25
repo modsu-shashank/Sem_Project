@@ -59,7 +59,7 @@ const Register = () => {
         dob: formData.dob,
         gender: formData.gender,
       });
-      navigate("/user-dashboard");
+      // navigate("/user-dashboard");
     } catch (error) {
       setError(error.message || "Registration failed. Please try again.");
     }

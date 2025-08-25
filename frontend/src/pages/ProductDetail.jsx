@@ -5,40 +5,56 @@ import { useCart } from "../context/CartContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useWatchlist } from "../context/WatchlistContext.jsx";
 import { Star, ShoppingCart, Heart, ArrowLeft } from "lucide-react";
+// ✅ IMPORT: Make sure to import the ProductReviews component if you use it here
+import ProductReviews from "../components/ProductReviews.jsx";
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const { products } = useProducts();
+  // ✅ MODIFIED: Destructure addReview to pass to the reviews component
+  const { products, addReview } = useProducts();
   const { addToCart } = useCart();
   const { isAuthenticated } = useAuth();
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
   const navigate = useNavigate();
+
   const [quantity, setQuantity] = useState(1);
   const [product, setProduct] = useState(null);
+  // ✅ ADDED: State to manage the selected grade
+  const [selectedGrade, setSelectedGrade] = useState(null);
 
   useEffect(() => {
     if (products && products.length > 0) {
       const foundProduct = products.find((p) => p.id === id);
       setProduct(foundProduct);
+      // ✅ ADDED: Set the initial selected grade to the first one available
+      if (
+        foundProduct &&
+        foundProduct.grades &&
+        foundProduct.grades.length > 0
+      ) {
+        setSelectedGrade(foundProduct.grades[0]);
+      }
     }
   }, [id, products]);
 
+  // ✅ MODIFIED: Pass the selectedGrade to the cart
   const handleAddToCart = () => {
     if (!isAuthenticated) {
       alert("Please login or sign up to add items to cart!");
       navigate("/login");
       return;
     }
-    addToCart(product, quantity);
+    addToCart(product, selectedGrade, quantity);
   };
 
+  // ✅ MODIFIED: Pass the selectedGrade to the cart before checkout
   const handleBuyNow = () => {
     if (!isAuthenticated) {
       alert("Please login or sign up to purchase items!");
       navigate("/login");
       return;
     }
-    addToCart(product, quantity);
+    addToCart(product, selectedGrade, quantity);
     navigate("/checkout");
   };
 
@@ -48,7 +64,7 @@ const ProductDetail = () => {
       navigate("/login");
       return;
     }
-    
+
     if (isInWatchlist(product.id)) {
       removeFromWatchlist(product.id);
     } else {
@@ -75,15 +91,14 @@ const ProductDetail = () => {
 
     const emptyStars = 5 - Math.ceil(rating);
     for (let i = 0; i < emptyStars; i++) {
-      stars.push(
-        <Star key={`empty-${i}`} className="h-5 w-5 text-gray-300" />
-      );
+      stars.push(<Star key={`empty-${i}`} className="h-5 w-5 text-gray-300" />);
     }
 
     return stars;
   };
 
-  if (!product) {
+  // ✅ MODIFIED: Updated loading check for product and selectedGrade
+  if (!product || !selectedGrade) {
     return (
       <div className="min-h-screen bg-green-50 flex items-center justify-center">
         <div className="text-center">
@@ -97,7 +112,6 @@ const ProductDetail = () => {
   return (
     <div className="min-h-screen bg-green-50 py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Back Button */}
         <button
           onClick={() => navigate(-1)}
           className="flex items-center text-gray-600 hover:text-gray-800 mb-6"
@@ -108,7 +122,6 @@ const ProductDetail = () => {
 
         <div className="bg-white rounded-lg shadow-lg overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-8">
-            {/* Product Image */}
             <div className="space-y-4">
               <img
                 src={product.image}
@@ -117,7 +130,6 @@ const ProductDetail = () => {
               />
             </div>
 
-            {/* Product Info */}
             <div className="space-y-6">
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -128,24 +140,49 @@ const ProductDetail = () => {
                     {renderStars(product.rating || 0)}
                   </div>
                   <span className="text-lg text-gray-600">
-                    {product.rating ? product.rating.toFixed(1) : "0.0"} out of 5
+                    {product.rating ? product.rating.toFixed(1) : "0.0"} out of
+                    5
                   </span>
                 </div>
-                <span className="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                  {product.grade}
-                </span>
               </div>
 
               <div>
+                {/* ✅ MODIFIED: Display price from selectedGrade state */}
                 <h2 className="text-2xl font-bold text-orange-600 mb-2">
-                  ₹{product.price}
+                  ₹{selectedGrade.price}
                 </h2>
                 <p className="text-gray-600 text-lg leading-relaxed">
                   {product.description}
                 </p>
               </div>
 
-              {/* Quantity Selector */}
+              {/* ✅ ADDED: Grade Selector Dropdown */}
+              <div className="flex items-center space-x-4">
+                <label
+                  htmlFor="grade-select"
+                  className="text-gray-700 font-medium"
+                >
+                  Grade:
+                </label>
+                <select
+                  id="grade-select"
+                  value={selectedGrade.name}
+                  onChange={(e) => {
+                    const newGrade = product.grades.find(
+                      (g) => g.name === e.target.value
+                    );
+                    setSelectedGrade(newGrade);
+                  }}
+                  className="w-full sm:w-auto p-2 border border-gray-300 rounded-lg"
+                >
+                  {product.grades.map((grade) => (
+                    <option key={grade.name} value={grade.name}>
+                      {grade.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="flex items-center space-x-4">
                 <label className="text-gray-700 font-medium">Quantity:</label>
                 <div className="flex items-center border border-gray-300 rounded-lg">
@@ -167,7 +204,6 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
                   onClick={handleAddToCart}
@@ -190,11 +226,14 @@ const ProductDetail = () => {
                       : "border-gray-300 text-gray-600 hover:border-red-500 hover:text-red-500"
                   }`}
                 >
-                  <Heart className={`h-5 w-5 ${isInWatchlist(product.id) ? "fill-current" : ""}`} />
+                  <Heart
+                    className={`h-5 w-5 ${
+                      isInWatchlist(product.id) ? "fill-current" : ""
+                    }`}
+                  />
                 </button>
               </div>
 
-              {/* Product Details */}
               <div className="border-t pt-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
                   Product Details
@@ -205,12 +244,18 @@ const ProductDetail = () => {
                     <span className="ml-2 font-medium">{product.category}</span>
                   </div>
                   <div>
+                    {/* ✅ MODIFIED: Display grade from selectedGrade state */}
                     <span className="text-gray-600">Grade:</span>
-                    <span className="ml-2 font-medium">{product.grade}</span>
+                    <span className="ml-2 font-medium">
+                      {selectedGrade.name}
+                    </span>
                   </div>
                   <div>
+                    {/* ✅ MODIFIED: Display price from selectedGrade state */}
                     <span className="text-gray-600">Price:</span>
-                    <span className="ml-2 font-medium">₹{product.price} per kg</span>
+                    <span className="ml-2 font-medium">
+                      ₹{selectedGrade.price} per kg
+                    </span>
                   </div>
                   <div>
                     <span className="text-gray-600">Rating:</span>
@@ -222,6 +267,11 @@ const ProductDetail = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        {/* ✅ ADDED: Customer Reviews Section */}
+        <div className="mt-8">
+          <ProductReviews product={product} onAddReview={addReview} />
         </div>
       </div>
     </div>

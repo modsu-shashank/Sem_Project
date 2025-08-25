@@ -18,7 +18,6 @@ export const CartProvider = ({ children }) => {
       const savedCart = localStorage.getItem("rgo_cart");
       if (savedCart) {
         const parsedCart = JSON.parse(savedCart);
-        // Ensure parsed cart is an array
         if (Array.isArray(parsedCart)) {
           setItems(parsedCart);
         } else {
@@ -39,32 +38,44 @@ export const CartProvider = ({ children }) => {
     }
   }, [items]);
 
-  const addToCart = (product, quantity = 1) => {
+  const addToCart = (product, selectedGrade, quantity = 1) => {
     setItems((prev) => {
-      const existingItem = prev.find((item) => item.product.id === product.id);
+      const existingItem = prev.find(
+        (item) =>
+          item.product.id === product.id &&
+          item.selectedGrade.name === selectedGrade.name
+      );
+
       if (existingItem) {
         return prev.map((item) =>
-          item.product.id === product.id
+          item.product.id === product.id &&
+          item.selectedGrade.name === selectedGrade.name
             ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
-      return [...prev, { product, quantity }];
+      return [...prev, { product, selectedGrade, quantity }];
     });
   };
 
-  const removeFromCart = (productId) => {
-    setItems((prev) => prev.filter((item) => item.product.id !== productId));
+  const removeFromCart = (cartItemId) => {
+    setItems((prev) =>
+      prev.filter(
+        (item) => `${item.product.id}-${item.selectedGrade.name}` !== cartItemId
+      )
+    );
   };
 
-  const updateQuantity = (productId, quantity) => {
+  const updateQuantity = (cartItemId, quantity) => {
     if (quantity <= 0) {
-      removeFromCart(productId);
+      removeFromCart(cartItemId);
       return;
     }
     setItems((prev) =>
       prev.map((item) =>
-        item.product.id === productId ? { ...item, quantity } : item
+        `${item.product.id}-${item.selectedGrade.name}` === cartItemId
+          ? { ...item, quantity }
+          : item
       )
     );
   };
@@ -77,8 +88,10 @@ export const CartProvider = ({ children }) => {
     (sum, item) => sum + (item.quantity || 0),
     0
   );
+
   const totalPrice = (items || []).reduce(
-    (sum, item) => sum + (item.product?.price || 0) * (item.quantity || 0),
+    (sum, item) =>
+      sum + (item.selectedGrade?.price || 0) * (item.quantity || 0),
     0
   );
 

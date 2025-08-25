@@ -26,7 +26,7 @@ const Login = () => {
       // Try login with email first, fallback to phone if email fails
       await login(formData.identifier, formData.password);
       // Redirect based on role or just to dashboard
-      navigate("/user-dashboard");
+      // navigate("/user-dashboard");
     } catch (error) {
       setError(error.message || "Invalid email/phone or password");
     }
